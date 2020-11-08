@@ -1,0 +1,69 @@
+﻿@page "/objects"
+@inject IJSRuntime JSRuntime;
+@using System.Text.Json;
+@using System.Text.Json.Serialization;
+
+<h1>Pass objects</h1>
+<hr/>
+<p>Organization as json:</p><pre class="exception-font">@organizationAsJson</pre>
+<button class="btn btn-primary" @onclick="GetOrganizationAsJson">Fetch</button>
+<hr/>
+<p>Organization as C type:</p><pre class="exception-font">@organizationAsCtype</pre>
+<button class="btn btn-primary" @onclick="GetOrganizationAsCtype">Fetch</button>
+<hr/>
+
+@code {
+
+    private Organization organizationAsJson;
+    private Organization organizationAsCtype;
+
+    class Employee {
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+        [JsonPropertyName("age")]
+        public int Age { get; set; }
+
+        public override string ToString() {
+            return $"name={Name}, Age={Age}";
+        }
+    }
+
+    class Organization {
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+        [JsonPropertyName("registratedDate")]
+        public DateTime RegistratedDate { get; set; }
+        [JsonPropertyName("solidity")]
+        public double Solidity { get; set; }
+        [JsonPropertyName("employees")]
+        public List<Employee> Employees { get; set; }
+
+        public override string ToString() {
+            return $"Name={Name}\r\nRegistratedDate={RegistratedDate.ToString("O")}\r\nSolidity={Solidity}\r\nEmplyees=[{String.Join("; ", Employees)} ]";
+        }
+    }
+    async void GetOrganizationAsJson()
+    {
+        var o = await JSRuntime.InvokeAsync<string>("getOrganizationAsJson", "123456-1234");    
+        Console.WriteLine($"[C#] GetOrganizationAsJson {o}");
+/*
+        IsoDateTimeConverter converter = new IsoDateTimeConverter
+        {
+            DateTimeStyles = DateTimeStyles.AdjustToUniversal,
+            DateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ssK"
+        };
+*/
+        //JsonSerializerOptions options = new JsonSerializerOptions();
+        //options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
+
+        organizationAsJson = JsonSerializer.Deserialize<Organization>(o);
+        StateHasChanged();
+    }
+
+    async void GetOrganizationAsCtype() {
+        var o = await JSRuntime.InvokeAsync<string>("getOrganizationAsCtype", "123456-1234");    
+        Console.WriteLine($"[C#] GetOrganizationAsCtype {o}");
+        organizationAsCtype = JsonSerializer.Deserialize<Organization>(o);
+        StateHasChanged();
+    }
+}

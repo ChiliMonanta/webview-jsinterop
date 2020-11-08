@@ -1,0 +1,19 @@
+﻿@page "/log"
+@inject IJSRuntime JSRuntime;
+
+<h1>Log</h1>
+<hr/>
+<p>
+    <p>Log</p>
+    <p><input type="text" @bind="log" width="10" /><br /></p>
+    <button class="btn btn-primary" @onclick="GoLog">Write to Log</button>
+</p>
+
+@code {
+    string log = "Sample log";
+
+    async void GoLog()
+    {
+        await JSRuntime.InvokeVoidAsync("golog", log);
+    }
+}

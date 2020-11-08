@@ -1,0 +1,64 @@
+﻿@page "/numbers"
+@inject IJSRuntime JSRuntime;
+
+<h1>Numbers</h1>
+<hr/>
+<p>
+    <p>Addition</p>
+    <p><input type="number" @bind="x" width="10" /> + <input type="number" @bind="y" width="70" /> = @resultAdd<br /></p>
+    <button class="btn btn-primary" @onclick="Add" >calculate</button>
+</p>
+<hr/>
+<p>
+    <p>Cosine</p>
+    <p><input type="number" @bind="xx" width="10" /> = @resultCosine<br /></p>
+    <button class="btn btn-primary" @onclick="Cosine">calculate</button>
+</p>
+<hr/>
+<p>
+    <p>Sort</p>
+    <table class="number-table">
+        <tr>
+            <th>Unsorted:</th>
+            <th>[@(String.Join(", ", unsorted))]</th>
+        </tr>
+        <tr>
+            <th>Sorted:</th>
+            <th>[@(String.Join(", ", sorted))]</th>
+        </tr>
+    </table>
+    <button class="btn btn-primary" @onclick="Sort">Sort</button>
+</p>
+
+@code {
+    int x = 2;
+    int y = 4;
+    int resultAdd = 0;
+    double xx = 45.0;
+    double resultCosine = 0.0;
+    Random rnd = new Random();
+    long[] unsorted = new long[10];
+    long[] sorted = new long[10];
+
+    async void Add()
+    {
+        resultAdd = await JSRuntime.InvokeAsync<int>("add", x, y);
+        System.Console.WriteLine($"[C#] Add {x} + {y} = {resultAdd}");
+        StateHasChanged();
+    }
+
+    async void Cosine()
+    {
+        resultCosine = await JSRuntime.InvokeAsync<double>("cosine", xx);
+        System.Console.WriteLine($"[C#] Cosine({xx}) = {resultCosine}");
+        StateHasChanged();
+    }
+
+    async void Sort()
+    {
+        unsorted = Enumerable.Repeat(0, 10).Select(i => Convert.ToInt64(rnd.Next(0, 100))).ToArray();
+        sorted = await JSRuntime.InvokeAsync<long[]>("sort", unsorted);
+        System.Console.WriteLine($"[C#] Sort({string.Join(",", unsorted)}) = {string.Join(",", sorted)}");
+        StateHasChanged();
+    }
+}

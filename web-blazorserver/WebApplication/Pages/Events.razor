@@ -1,0 +1,39 @@
+﻿@page "/events"
+@inject IJSRuntime JSRuntime;
+
+<h1>Events</h1>
+<hr/>
+<p>Count down</p>
+<button class="btn btn-primary event-button" @onclick="StartCountDown">Start</button>
+@foreach (var message in messages)
+{
+<p class ="event-message">@message</p>
+}
+
+@code {
+    private List<string> messages = new List<string>();
+    private static Action<string> addMessageAction;
+    
+    protected override void OnInitialized()
+    {
+        addMessageAction = AddMessage;
+    }
+
+    async void StartCountDown() {
+        await JSRuntime.InvokeVoidAsync("startCountDown");
+        System.Console.WriteLine($"[C#] startCountDown");
+        StateHasChanged();
+    }
+    
+    
+    private void AddMessage(string message) {
+        messages.Add(message);
+        StateHasChanged();
+    }
+
+    [JSInvokableAttribute("CountDown")]
+    public static void CountDownCallback(string message) {
+        Console.WriteLine($"[C#] CountDownCallback: {message}");
+        addMessageAction.Invoke(message);
+    }
+}

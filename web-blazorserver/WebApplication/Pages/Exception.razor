@@ -1,0 +1,114 @@
+﻿@page "/exception"
+@inject IJSRuntime JSRuntime;
+@using System.Text.Json;
+@using System.Text.Json.Serialization;
+
+<h1>Exception</h1>
+<hr/>
+<p>JavaScript:</p><pre class="exception-font">@javaScriptError</pre>
+<button class="btn btn-primary" @onclick="ExceptionJavaScript">Click me</button>
+<hr/>
+<p>Application:</p><pre class="exception-font">@applicationError</pre>
+<button class="btn btn-primary" @onclick="ExceptionApplication">Click me</button>
+<hr/>
+<p>GoLang Panic:</p><pre class="exception-font">@goLangErrorPanic</pre>
+<button class="btn btn-primary" @onclick="ExceptionGoLangPanic">Click me</button>
+<hr/>
+<p>GoLang "throw":</p><pre class="exception-font">@goLangErrorThrow</pre>
+<button class="btn btn-primary" @onclick="ExceptionGoLangThrow">Click me</button>
+
+@code {
+
+    string javaScriptError;
+    string applicationError;
+    string goLangErrorPanic;
+    string goLangErrorThrow;
+
+    async void ExceptionJavaScript()
+    {
+        try {
+            await JSRuntime.InvokeVoidAsync("javaScriptDoThrow");
+        } catch (System.Exception e) {
+            javaScriptError = GetExceptionInfo(e);
+        }
+        StateHasChanged();
+    }
+
+    async void ExceptionApplication()
+    {
+        try {
+            await JSRuntime.InvokeVoidAsync("applicationDoThrow");
+        } catch (System.Exception e) {
+            applicationError = GetExceptionInfo(e);
+        }
+        StateHasChanged();
+    }
+
+    async void ExceptionGoLangPanic()
+    {
+        try {
+            await JSRuntime.InvokeVoidAsync("goLangDoPanic");
+        } catch (System.Exception e) {
+            goLangErrorPanic = GetExceptionInfo(e);
+        }
+        StateHasChanged();
+    }
+
+    async void ExceptionGoLangThrow()
+    {
+        try {
+            await JSRuntime.InvokeVoidAsync("goLangDoThrow");
+        } catch (System.Exception e) {
+            goLangErrorThrow = GetExceptionInfo(e);
+        }
+        StateHasChanged();
+    }
+
+    private string GetExceptionInfo(System.Exception e) {
+        var errorString = $"Type: {e.GetType().ToString()}\r\n";
+        errorString += $"StackTrace:\r\n{e.StackTrace}\r\n";
+        if (e.InnerException != null) {
+            var e1 = e.InnerException;
+            errorString += "\r\n\r\nInner exception:\r\n";
+            errorString += $"Type: {e.GetType().ToString()}\r\n";
+            errorString += $"Message: {e.Message}\r\n";
+            errorString += $"StackTrace: {e.StackTrace}\r\n";
+        } else {
+            var remoteexceptions = GetRemoteExceptionInfo(e.Message);
+            errorString += $"{remoteexceptions}\r\n";
+        }
+
+        return errorString;
+    }
+
+    private string GetRemoteExceptionInfo(string message) {
+        // It's not possible to get nested exception, 
+        // https://github.com/dotnet/aspnetcore/blob/master/src/JSInterop/Microsoft.JSInterop/src/JSRuntime.cs#L182
+        // Serialize exception in message instead
+        try {
+            var remoteException = JsonSerializer.Deserialize<RemoteException>(message);
+            return remoteException.ToString();
+        } catch (JsonException) {
+            return $"Message: {message}\r\n";
+        }
+    }
+
+    private class RemoteException : Exception {
+        [JsonPropertyName("message")]
+        public string RemoteMessage { get; set; }
+        [JsonPropertyName("type")]
+        public string RemoteType { get; set; }
+        [JsonPropertyName("stacktrace")]
+        public string RemoteStacktrace { get; set; }
+        [JsonPropertyName("innerexception")]
+        public RemoteException RemoteInnerException {get;set;}
+
+        public override string ToString() {
+            var remoteMessage = $"RemoteType: {RemoteType}\r\n";
+            remoteMessage += $"RemoteMessage: {RemoteMessage}\r\n";
+            remoteMessage += $"RemoteStackTrace:\r\n{RemoteStacktrace?.TrimEnd()}\r\n";
+            remoteMessage += $"RemoteInnerException:\r\n{RemoteInnerException?.ToString() ?? "null"}";
+            return remoteMessage;
+        }
+    }
+}

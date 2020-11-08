@@ -1,0 +1,7 @@
+{
+    "files.exclude": {
+        "desktop-dotnet/webwindow-blazor/obj": true,
+        "desktop-dotnet/webwindow-blazor/bin": true,
+        "node_modules": true
+    }
+}
