@@ -11,7 +11,7 @@ A call chain might look like this:<br>
 This example covers a couple of different platforms (Clients):
 
 - Console (not an webview)
-- Desktop app
+- Desktop app (Window, Linux, Mac)
 - Android app, Mobile phone
 - Ios app, Mobile phone
 - Browser (limited, you cant make platform calls)
